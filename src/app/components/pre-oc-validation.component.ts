@@ -59,15 +59,6 @@ import { OrderPermissionsService } from '../services/order-permissions.service';
             <p class="text-sm font-medium text-blue-900">Productos Procesados</p>
             <p class="text-lg font-bold text-purple-700">{{ order.processedProductsCount || 0 }} productos</p>
           </div>
-          <div *ngIf="order.payment_type || order.profit_margin_percentage">
-            <p class="text-sm font-medium text-blue-900">Tipo de Pago / Margen</p>
-            <p class="text-lg font-bold text-orange-700">
-              {{ order.payment_description || order.payment_type || 'No especificado' }}
-            </p>
-            <p class="text-xs text-orange-600" *ngIf="order.profit_margin_percentage">
-              Margen: {{ order.profit_margin_percentage }}%
-            </p>
-          </div>
         </div>
       </div>
 
@@ -107,8 +98,6 @@ import { OrderPermissionsService } from '../services/order-permissions.service';
                     <th class="text-center p-2 font-bold">SKU XML</th>
                     <th class="text-center p-2 font-bold">SKU Oracle</th>
                     <th class="text-right p-2 font-bold">Costo</th>
-                    <th class="text-right p-2 font-bold bg-blue-100">Costo Público</th>
-                    <th class="text-center p-2 font-bold bg-purple-100">Margen %</th>
                     <th class="text-center p-2 font-bold">División</th>
                     <th class="text-center p-2 font-bold">Línea</th>
                     <th class="text-center p-2 font-bold">Clase</th>
@@ -123,12 +112,6 @@ import { OrderPermissionsService } from '../services/order-permissions.service';
                     <td class="text-center p-2 font-mono text-xs">{{ producto.sku_xml || 'N/A' }}</td>
                     <td class="text-center p-2 font-mono text-xs bg-yellow-50 font-semibold">{{ producto.sku_oracle || 'N/A' }}</td>
                     <td class="text-right p-2">\${{ producto.precio?.toFixed(2) || '0.00' }}</td>
-                    <td class="text-right p-2 bg-blue-50 font-semibold">
-                      \${{ producto.precio_venta?.toFixed(2) || 'N/A' }}
-                    </td>
-                    <td class="text-center p-2 bg-purple-50 font-bold">
-                      {{ producto.margen ? producto.margen + '%' : 'N/A' }}
-                    </td>
                     <td class="text-center p-2 font-mono">{{ producto.division || '-' }}</td>
                     <td class="text-center p-2 font-mono">{{ producto.linea || '-' }}</td>
                     <td class="text-center p-2 font-mono">{{ producto.clase || '-' }}</td>
