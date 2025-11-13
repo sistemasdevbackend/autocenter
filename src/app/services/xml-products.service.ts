@@ -11,28 +11,36 @@ export class XmlProductsService {
   async saveInvoices(orderId: string, invoices: OrderInvoice[]): Promise<void> {
     try {
       for (const invoice of invoices) {
-        // Insertar usando SQL directo para evitar problemas de caché
-        const { data: invoiceData, error: invoiceError } = await this.supabase.client
-          .from('order_invoices')
-          .insert([{
-            order_id: orderId,
-            invoice_folio: invoice.invoice_folio,
-            xml_content: invoice.xml_content,
-            total_amount: invoice.total_amount,
-            subtotal: invoice.subtotal || 0,
-            iva: invoice.iva || 0,
-            proveedor_nombre: invoice.proveedor,
-            rfc_proveedor: invoice.rfc_proveedor,
-            validados: invoice.validados || 0,
-            nuevos: invoice.nuevos || 0
-          }])
-          .select()
-          .single();
+        // Usar Edge Function para bypasear el caché del esquema de PostgREST
+        const response = await fetch(
+          `${this.supabase.supabaseUrl}/functions/v1/insert-invoice`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${this.supabase.supabaseAnonKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              order_id: orderId,
+              invoice_folio: invoice.invoice_folio,
+              xml_content: invoice.xml_content,
+              total_amount: invoice.total_amount,
+              subtotal: invoice.subtotal || 0,
+              iva: invoice.iva || 0,
+              proveedor_nombre: invoice.proveedor,
+              rfc_proveedor: invoice.rfc_proveedor,
+              validados: invoice.validados || 0,
+              nuevos: invoice.nuevos || 0
+            })
+          }
+        );
 
-        if (invoiceError) {
-          console.error('Error insertando factura:', invoiceError);
-          throw new Error(`Error al guardar factura ${invoice.invoice_folio}: ${invoiceError.message}`);
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(`Error al guardar factura ${invoice.invoice_folio}: ${errorData.error || 'Error desconocido'}`);
         }
+
+        const { data: invoiceData } = await response.json();
 
         if (!invoiceData) {
           throw new Error(`No se pudo crear la factura ${invoice.invoice_folio}`);
