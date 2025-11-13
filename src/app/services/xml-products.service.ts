@@ -18,6 +18,8 @@ export class XmlProductsService {
             invoice_folio: invoice.invoice_folio,
             xml_content: invoice.xml_content,
             total_amount: invoice.total_amount,
+            subtotal: invoice.subtotal || 0,
+            iva: invoice.iva || 0,
             proveedor_nombre: invoice.proveedor,
             rfc_proveedor: invoice.rfc_proveedor,
             validados: invoice.validados || 0,

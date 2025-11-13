@@ -24,6 +24,100 @@ export class PdfGeneratorService {
     return Promise.resolve();
   }
 
+  private generateXmlInvoicesSection(order: Order): string {
+    if (!order.invoices || order.invoices.length === 0) {
+      return '';
+    }
+
+    let invoicesHtml = '';
+    let totalSubtotal = 0;
+    let totalIva = 0;
+    let totalAmount = 0;
+
+    order.invoices.forEach((invoice, index) => {
+      const subtotal = invoice.subtotal || 0;
+      const iva = invoice.iva || 0;
+      const total = invoice.total_amount || 0;
+
+      totalSubtotal += subtotal;
+      totalIva += iva;
+      totalAmount += total;
+
+      invoicesHtml += `
+        <div style="background: #f0f9ff; border: 2px solid #3b82f6; border-radius: 6px; padding: 8px; margin-bottom: 8px;">
+          <div style="display: flex; justify-between; align-items: center; margin-bottom: 6px;">
+            <div style="flex: 1;">
+              <div style="font-weight: bold; font-size: 11px; color: #1e40af; margin-bottom: 2px;">
+                📄 Factura: ${invoice.invoice_folio}
+              </div>
+              <div style="font-size: 9px; color: #1e40af;">
+                <strong>Proveedor:</strong> ${invoice.proveedor}
+              </div>
+              ${invoice.rfc_proveedor ? `
+                <div style="font-size: 9px; color: #1e40af;">
+                  <strong>RFC:</strong> ${invoice.rfc_proveedor}
+                </div>
+              ` : ''}
+            </div>
+          </div>
+
+          <!-- Desglose Fiscal -->
+          <div style="background: white; border: 1px solid #93c5fd; border-radius: 4px; padding: 6px; margin-top: 4px;">
+            <div style="font-weight: bold; font-size: 9px; color: #1e40af; margin-bottom: 4px; border-bottom: 1px solid #dbeafe; padding-bottom: 2px;">
+              Desglose Fiscal:
+            </div>
+            <table style="width: 100%; border-collapse: collapse;">
+              <tbody>
+                <tr>
+                  <td style="font-size: 9px; color: #4b5563; padding: 2px 0;">Subtotal (Base sin IVA):</td>
+                  <td style="font-size: 9px; font-weight: bold; color: #111827; text-align: right; padding: 2px 0;">$${subtotal.toFixed(2)}</td>
+                </tr>
+                <tr>
+                  <td style="font-size: 9px; color: #4b5563; padding: 2px 0;">IVA (16%):</td>
+                  <td style="font-size: 9px; font-weight: bold; color: #111827; text-align: right; padding: 2px 0;">$${iva.toFixed(2)}</td>
+                </tr>
+                <tr style="border-top: 1px solid #e5e7eb;">
+                  <td style="font-size: 9px; font-weight: bold; color: #1e40af; padding-top: 3px;">Total Factura:</td>
+                  <td style="font-size: 10px; font-weight: bold; color: #1e40af; text-align: right; padding-top: 3px;">$${total.toFixed(2)}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    });
+
+    return `
+      <div class="section-title" style="margin-top: 15px;">📦 Productos de Facturas XML</div>
+      <div style="margin-bottom: 10px;">
+        ${invoicesHtml}
+
+        <!-- Total General de Todas las Facturas -->
+        <div style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); border: 2px solid #1e40af; border-radius: 6px; padding: 10px; margin-top: 10px;">
+          <div style="font-weight: bold; font-size: 11px; color: white; margin-bottom: 6px; text-align: center;">
+            💰 RESUMEN TOTAL DE FACTURAS
+          </div>
+          <table style="width: 100%; border-collapse: collapse;">
+            <tbody>
+              <tr>
+                <td style="font-size: 9px; color: #dbeafe; padding: 2px 0;">Subtotal General:</td>
+                <td style="font-size: 10px; font-weight: bold; color: white; text-align: right; padding: 2px 0;">$${totalSubtotal.toFixed(2)}</td>
+              </tr>
+              <tr>
+                <td style="font-size: 9px; color: #dbeafe; padding: 2px 0;">IVA Total:</td>
+                <td style="font-size: 10px; font-weight: bold; color: white; text-align: right; padding: 2px 0;">$${totalIva.toFixed(2)}</td>
+              </tr>
+              <tr style="border-top: 2px solid rgba(255,255,255,0.3);">
+                <td style="font-size: 11px; font-weight: bold; color: white; padding-top: 4px;">TOTAL GENERAL:</td>
+                <td style="font-size: 13px; font-weight: bold; color: white; text-align: right; padding-top: 4px;">$${totalAmount.toFixed(2)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }
+
   generateDiagnosticBudgetHTML(order: Order, customer: Customer): string {
     console.log('Generando HTML con logos');
     console.log('Logo AutoCenter disponible:', !!this.logoAutoCenter, 'Tamaño:', this.logoAutoCenter.length);
@@ -605,6 +699,8 @@ export class PdfGeneratorService {
             </tbody>
           </table>
         ` : ''}
+
+        ${this.generateXmlInvoicesSection(order)}
 
         <div class="totals-box">
           ${subtotalProductos > 0 ? `

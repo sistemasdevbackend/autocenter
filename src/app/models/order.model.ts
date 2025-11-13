@@ -108,6 +108,8 @@ export interface OrderInvoice {
   xml_content?: string;
   xml_data?: any;
   total_amount: number;
+  subtotal?: number;
+  iva?: number;
   items: any[];
   upload_date?: Date;
   proveedor: string;

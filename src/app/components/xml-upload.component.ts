@@ -234,6 +234,21 @@ export class XmlUploadComponent {
           const folio = comprobante?.getAttribute('Folio') || comprobante?.getAttribute('folio') || `SIN-FOLIO-${Date.now()}`;
           const total = parseFloat(comprobante?.getAttribute('Total') || comprobante?.getAttribute('total') || '0');
 
+          // Extraer datos fiscales de cfdi:Traslado
+          let subtotal = 0;
+          let iva = 0;
+          const traslados = xmlDoc.querySelectorAll('Traslado');
+          traslados.forEach((traslado) => {
+            const impuesto = traslado.getAttribute('Impuesto') || traslado.getAttribute('impuesto');
+            // 002 es el código de IVA en el SAT
+            if (impuesto === '002') {
+              const base = parseFloat(traslado.getAttribute('Base') || traslado.getAttribute('base') || '0');
+              const importe = parseFloat(traslado.getAttribute('Importe') || traslado.getAttribute('importe') || '0');
+              subtotal += base;
+              iva += importe;
+            }
+          });
+
           const conceptos = xmlDoc.querySelectorAll('Concepto');
           const xmlProducts: XmlProduct[] = [];
 
@@ -264,6 +279,8 @@ export class XmlUploadComponent {
             invoice_folio: folio,
             xml_content: xmlContent,
             total_amount: total,
+            subtotal: subtotal,
+            iva: iva,
             items: xmlProducts,
             proveedor,
             rfc_proveedor: rfcProveedor,
