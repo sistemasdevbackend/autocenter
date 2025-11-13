@@ -11,35 +11,35 @@ export class XmlProductsService {
   async saveInvoices(orderId: string, invoices: OrderInvoice[]): Promise<void> {
     try {
       for (const invoice of invoices) {
+        // Usar RPC para insertar y evitar problemas de caché de esquema
         const { data: invoiceData, error: invoiceError } = await this.supabase.client
-          .from('order_invoices')
-          .insert({
-            order_id: orderId,
-            invoice_folio: invoice.invoice_folio,
-            xml_content: invoice.xml_content,
-            total_amount: invoice.total_amount,
-            subtotal: invoice.subtotal || 0,
-            iva: invoice.iva || 0,
-            proveedor_nombre: invoice.proveedor,
-            rfc_proveedor: invoice.rfc_proveedor,
-            validados: invoice.validados || 0,
-            nuevos: invoice.nuevos || 0
-          })
-          .select()
-          .maybeSingle();
+          .rpc('insert_order_invoice', {
+            p_order_id: orderId,
+            p_invoice_folio: invoice.invoice_folio,
+            p_xml_content: invoice.xml_content,
+            p_total_amount: invoice.total_amount,
+            p_subtotal: invoice.subtotal || 0,
+            p_iva: invoice.iva || 0,
+            p_proveedor_nombre: invoice.proveedor,
+            p_rfc_proveedor: invoice.rfc_proveedor,
+            p_validados: invoice.validados || 0,
+            p_nuevos: invoice.nuevos || 0
+          });
 
         if (invoiceError) {
           console.error('Error insertando factura:', invoiceError);
           throw new Error(`Error al guardar factura ${invoice.invoice_folio}: ${invoiceError.message}`);
         }
 
-        if (!invoiceData) {
+        if (!invoiceData || !invoiceData[0]) {
           throw new Error(`No se pudo crear la factura ${invoice.invoice_folio}`);
         }
 
+        const insertedInvoiceId = invoiceData[0].id;
+
         if (invoice.xml_products && invoice.xml_products.length > 0) {
           const productsToInsert = invoice.xml_products.map(product => ({
-            invoice_id: invoiceData.id,
+            invoice_id: insertedInvoiceId,
             order_id: orderId,
             descripcion: product.descripcion || 'Sin descripción',
             cantidad: product.cantidad || 0,
