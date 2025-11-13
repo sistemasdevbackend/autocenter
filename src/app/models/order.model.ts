@@ -86,6 +86,7 @@ export interface XmlProduct {
   subclase?: string;
   margen?: number;
   precioVenta?: number;
+  precio_venta?: number;
   isValidated: boolean;
   isNew: boolean;
   isProcessed?: boolean;
@@ -199,4 +200,7 @@ export interface Order {
   delivery_status?: 'pending' | 'delivered';
   delivered_at?: string;
   delivered_by?: string;
+  payment_type?: string;
+  profit_margin_percentage?: number;
+  payment_description?: string;
 }
