@@ -2268,18 +2268,6 @@ export class DashboardComponent implements OnInit {
     return this.uploadedInvoices.length > 0 || this.xmlProducts.length > 0;
   }
 
-  getTotalSubtotal(): number {
-    return this.uploadedInvoices.reduce((sum, invoice) => sum + (invoice.subtotal || 0), 0);
-  }
-
-  getTotalIva(): number {
-    return this.uploadedInvoices.reduce((sum, invoice) => sum + (invoice.iva || 0), 0);
-  }
-
-  getTotalAmount(): number {
-    return this.uploadedInvoices.reduce((sum, invoice) => sum + (invoice.total_amount || 0), 0);
-  }
-
   async deleteInvoice(invoice: OrderInvoice) {
     if (!invoice.id) return;
 

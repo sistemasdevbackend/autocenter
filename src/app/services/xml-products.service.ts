@@ -11,46 +11,33 @@ export class XmlProductsService {
   async saveInvoices(orderId: string, invoices: OrderInvoice[]): Promise<void> {
     try {
       for (const invoice of invoices) {
-        // Usar Edge Function para bypasear el caché del esquema de PostgREST
-        const response = await fetch(
-          `${this.supabase.supabaseUrl}/functions/v1/insert-invoice`,
-          {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${this.supabase.supabaseAnonKey}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              order_id: orderId,
-              invoice_folio: invoice.invoice_folio,
-              xml_content: invoice.xml_content,
-              total_amount: invoice.total_amount,
-              subtotal: invoice.subtotal || 0,
-              iva: invoice.iva || 0,
-              proveedor_nombre: invoice.proveedor,
-              rfc_proveedor: invoice.rfc_proveedor,
-              validados: invoice.validados || 0,
-              nuevos: invoice.nuevos || 0
-            })
-          }
-        );
+        const { data: invoiceData, error: invoiceError } = await this.supabase.client
+          .from('order_invoices')
+          .insert({
+            order_id: orderId,
+            invoice_folio: invoice.invoice_folio,
+            xml_content: invoice.xml_content,
+            total_amount: invoice.total_amount,
+            proveedor_nombre: invoice.proveedor,
+            rfc_proveedor: invoice.rfc_proveedor,
+            validados: invoice.validados || 0,
+            nuevos: invoice.nuevos || 0
+          })
+          .select()
+          .maybeSingle();
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(`Error al guardar factura ${invoice.invoice_folio}: ${errorData.error || 'Error desconocido'}`);
+        if (invoiceError) {
+          console.error('Error insertando factura:', invoiceError);
+          throw new Error(`Error al guardar factura ${invoice.invoice_folio}: ${invoiceError.message}`);
         }
-
-        const { data: invoiceData } = await response.json();
 
         if (!invoiceData) {
           throw new Error(`No se pudo crear la factura ${invoice.invoice_folio}`);
         }
 
-        const insertedInvoiceId = invoiceData.id;
-
         if (invoice.xml_products && invoice.xml_products.length > 0) {
           const productsToInsert = invoice.xml_products.map(product => ({
-            invoice_id: insertedInvoiceId,
+            invoice_id: invoiceData.id,
             order_id: orderId,
             descripcion: product.descripcion || 'Sin descripción',
             cantidad: product.cantidad || 0,
